@@ -1,24 +1,46 @@
-import logo from './logo.svg';
 import './App.css';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import LoginPage from './pages/LoginPage';
+import { useEffect, useState } from 'react';
+import data from './data.json';
+import RegisterPage from './pages/RegisterPage';
+import ProfilePage from './pages/ProfilePage';
+import TablePage from './pages/TablePage';
 
 function App() {
+  const [users, setUsers] = useState({ ...data });
+  const getUsers = JSON.parse(localStorage.getItem('userList'));
+
+  useEffect(() => {
+    setUsers(getUsers);
+  }, []);
+
+  // Iniciar sesión
+  const loginUser = (userData) => {
+    localStorage.setItem('userLog', JSON.stringify(userData));
+  };
+
+  // Añadir usuario
+  const addUser = (newUser) => {
+    setUsers([...users, newUser]);
+    localStorage.setItem('userList', JSON.stringify([...users, newUser]));
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route
+          path={'/'}
+          element={users ? <LoginPage usersData={users} onLogin={loginUser} /> : ''}
+        />
+        <Route
+          path={'/register'}
+          element={users ? <RegisterPage usersData={users} onSave={addUser} /> : ''}
+        />
+        <Route path={'/employees'} element={users ? <TablePage usersData={users} /> : ''} />
+        <Route path={'/profile'} element={<ProfilePage />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

@@ -1,0 +1,81 @@
+[
+    {
+      "ci": "1719068296",
+      "role": "admin",
+      "name": "Gabriela",
+      "lastname": "Cola",
+      "email": "gabriela@mail.com",
+      "username": "1719068296",
+      "password": "12345678",
+      "address": "Quitumbe Quito Ecuador",
+      "phone": "0963881061"
+    },
+    {
+      "ci": "1913592585",
+      "role": "employee",
+      "name": "Scott",
+      "lastname": "Page",
+      "email": "scottpage@ginkogene.com",
+      "username": "1913592585",
+      "password": "12345678",
+      "birthday": "Wed Jul 20 1988 18:08:11 GMT-0500 (hora de Ecuador)",
+      "address": "998 Dewitt Avenue, Lindisfarne, Iowa, 5286",
+      "phone": "(804) 467-2691",
+      "vaccines": {
+        "type": "Pfizer",
+        "date": "Mon Nov 23 2020 07:26:33 GMT-0500 (hora de Ecuador)",
+        "doses": 1
+      }
+    },
+    {
+      "ci": "1631603712",
+      "role": "employee",
+      "name": "Emerson",
+      "lastname": "Bradford",
+      "email": "emersonbradford@ginkogene.com",
+      "username": "1631603712",
+      "password": "12345678",
+      "birthday": "Thu Mar 17 1977 11:58:16 GMT-0500 (hora de Ecuador)",
+      "address": "631 Emmons Avenue, Tolu, Illinois, 1391",
+      "phone": "(977) 499-2471",
+      "vaccines": {
+        "type": "Pfizer",
+        "date": "Tue Sep 25 2007 08:54:58 GMT-0500 (hora de Ecuador)",
+        "doses": 1
+      }
+    },
+    {
+      "ci": "1594411671",
+      "role": "employee",
+      "name": "Hattie",
+      "lastname": "Tate",
+      "email": "hattietate@ginkogene.com",
+      "username": "1594411671",
+      "password": "12345678",
+      "birthday": "Fri Jun 08 2012 08:07:44 GMT-0500 (hora de Ecuador)",
+      "address": "914 Aster Court, Stewart, Delaware, 1007",
+      "phone": "(952) 461-3996",
+      "vaccines": {
+        "type": "Pfizer",
+        "date": "Thu Jun 01 1978 05:43:58 GMT-0500 (hora de Ecuador)",
+        "doses": 1
+      }
+    },
+    {
+      "ci": "1405720075",
+      "role": "employee",
+      "name": "Mcgowan",
+      "lastname": "Sloan",
+      "email": "mcgowansloan@ginkogene.com",
+      "username": "1405720075",
+      "password": "12345678",
+      "birthday": "Thu Feb 03 1994 05:49:05 GMT-0500 (hora de Ecuador)",
+      "address": "466 Columbia Place, Disautel, Ohio, 3471",
+      "phone": "(934) 522-3815",
+      "vaccines": {
+        "type": "Pfizer",
+        "date": "Fri Sep 04 1981 15:15:33 GMT-0500 (hora de Ecuador)",
+        "doses": 1
+      }
+    }
+  ]
