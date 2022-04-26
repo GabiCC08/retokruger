@@ -6,15 +6,14 @@ import AddReactionIcon from '@mui/icons-material/AddReaction';
 import GroupIcon from '@mui/icons-material/Group';
 import { device } from '../styles/device';
 import { AppBar, Button, Grid, Toolbar } from '@mui/material';
-import { useAuth } from '../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
+import { parseJwt } from '../lib/utils/decoder';
 
 export default function Header() {
-  const { data } = useAuth();
-  let navigate = useNavigate();
-
+  const { rol } = parseJwt(JSON.parse(localStorage.getItem('user')));
+  const navigate = useNavigate();
   const handleLogout = () => {
-    localStorage.setItem('userLog', JSON.stringify({}));
+    localStorage.setItem('user', JSON.stringify({}));
     navigate('/');
   };
 
@@ -33,8 +32,8 @@ export default function Header() {
           <ButtonMobileGrid item>
             <Button color="inherit">Cerrar Sesión</Button>
           </ButtonMobileGrid>
-          {data ? (
-            data.role === 'admin' ? (
+          {rol ? (
+            rol === 'ADMIN' ? (
               <NavGrid item>
                 <Breadcrumbs aria-label="breadcrumb">
                   <Link
@@ -45,14 +44,13 @@ export default function Header() {
                     <AddReactionIcon sx={{ mr: 0.8 }} fontSize="inherit" />
                     Formulario de registro
                   </Link>
-
                   <Link
                     underline="hover"
                     sx={{ display: 'flex', alignItems: 'center' }}
                     color="inherit"
                     href="/employees">
                     <GroupIcon sx={{ mr: 0.8 }} fontSize="inherit" />
-                    Registro de empleados
+                    Tabla de empleados
                   </Link>
                 </Breadcrumbs>
               </NavGrid>

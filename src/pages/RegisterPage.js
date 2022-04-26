@@ -1,12 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import styled from 'styled-components';
 import { Button, Chip, Divider, Grid, Paper, Stack, TextField, Typography } from '@mui/material';
 import Header from '../components/Header';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
 import { device } from '../styles/device';
 
 //Validacion de campos para registrar empleados:
@@ -33,7 +31,7 @@ const schema = yup.object().shape({
   email: yup.string().email('Ingresa un correo válido').required('Ingresa el correo electrónico')
 });
 
-//funcion para generar una cadena randómica para la autogeneración de contraseña
+//Genera una cadena randómica para la autogeneración de contraseña
 const randomString = (num) => {
   const composition = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let rand = '';
@@ -43,12 +41,14 @@ const randomString = (num) => {
   return rand;
 };
 
+//Genera un nombre de usuario
+const createUsername = (name, lastname) => {
+  const randomNum = Math.floor(Math.random() * 10);
+  const uname = name.charAt(0) + lastname + randomNum.toString();
+  return uname;
+};
+
 function RegisterPage(props) {
-  //Custom hook para identificar al usuario de la sesión activa
-  const { data } = useAuth();
-
-  let navigate = useNavigate();
-
   const defaultValues = {
     ci: '',
     name: '',
@@ -65,162 +65,181 @@ function RegisterPage(props) {
     defaultValues
   });
 
-  const [username, setUsername] = useState('**********');
-  const [password, setPassword] = useState('******');
-  //objeto de datos para guardar todos los datos requeridos para completar un registro
-  const [userData, setUserData] = useState({});
-  //controButton controla el estado(habilitado/deshabilitado) del botón de registro
-  const [controlButton, setControlButton] = useState(true);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [formData, setFormData] = useState({});
+  const [users, setUsers] = useState([]);
 
-  //Funcion para verificar los campos requeridos y generar credenciales de acceso
-  const onGenerateCreds = (formData) => {
-    if (props.usersData.find((user) => user.ci === formData.ci)) {
-      //En el caso de coincidencia entre cédulas de usuarios
-      alert(`Ya existe un usuario con la CI ${formData.ci}`);
-      //Botón para registrar datos se deshabilita hasta ingresar un #ci único
-      setControlButton(true);
+  //consumo de API que trae todos los usuarios
+  useEffect(() => {
+    fetch('https://app-help-back.herokuapp.com/user/all')
+      .then(async (response) => {
+        const data = await response.json();
+        setUsers(data.content);
+        if (!response.ok) {
+          const error = (data && data.message) || response.statusText;
+          return Promise.reject(error);
+        }
+      })
+      .catch((error) => {
+        console.error('Error', error);
+      });
+  }, []);
+
+  //Generación de credenciales (username y password)
+  const onGenerateCreds = (e) => {
+    const existingCi = users.find((user) => user.identification === e.ci);
+    const existingEmail = users.find((user) => user.email === e.email);
+    if (existingCi) {
+      alert('LA CÉDULA PERTENECE A UN USUARIO REGISTRADO, INGRESA OTRA');
+    }
+    if (existingEmail) {
+      alert('EL CORREO PERTENECE A UN USUARIO REGISTRADO, INGRESA OTRO');
+    }
+    setPassword(randomString(6));
+    setFormData(e);
+    do {
+      setUsername(createUsername(e.name, e.lastname));
+    } while (users.find((user) => user.username === username));
+  };
+
+  //consumo de API para registrar un nuevo empleado
+  const handleRegister = async () => {
+    const requestOptions = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...formData, username, password })
+    };
+    const response = await fetch('https://app-help-back.herokuapp.com/auth/nuevo', requestOptions);
+    if (!response.ok) {
+      const existingCi = users.find((user) => user.identification === formData.ci);
+      const existingEmail = users.find((user) => user.email === formData.email);
+      if (existingCi) {
+        alert('LA CÉDULA PERTENECE A UN USUARIO REGISTRADO, INGRESA OTRA');
+      }
+      if (existingEmail) {
+        alert('EL CORREO PERTENECE A UN USUARIO REGISTRADO, INGRESA OTRO');
+      }
     } else {
-      let aux = randomString(6);
-      alert('Datos válidos, puedes continuar con el registro');
-      setPassword(aux);
-      setUsername(formData.ci);
-      setUserData({ ...formData, password: aux, username: formData.ci, role: 'employee' });
-      setControlButton(false);
+      alert('REGISTRADO EXITOSAMENTE');
+      reset();
+      setUsername('');
+      setPassword('');
     }
   };
 
-  const handleRegister = () => {
-    props.onSave(userData);
-    reset();
-    setUsername('**********');
-    setPassword('******');
-  };
-
-  if (Object.keys(data).length !== 0) {
-    if (data.role !== 'admin') {
-      navigate('/profile');
-    } else {
-      return (
-        <RegisterContainer container direction="row" justifyContent="center" alignItems="center">
-          <Header />
-          <Grid item xs={11} sm={10} md={8} lg={6}>
-            <PaperStyled elevation={24}>
-              <Typography variant="h2" align="center">
-                Registra un empleado
-              </Typography>
-              <FormContainer>
-                <form noValidate onSubmit={handleSubmit(onGenerateCreds)}>
-                  <Grid container spacing={2} justifyContent="center" alignItems="center">
-                    <Grid xs={12} sm={6} item>
-                      <Controller
-                        name="name"
-                        control={control}
-                        defaultValue=""
-                        render={({ field: { ref, ...rest } }) => (
-                          <RegisterTextField
-                            {...rest}
-                            label="Nombre(s)"
-                            type="text"
-                            inputRef={ref}
-                            error={!!errors.name}
-                            helperText={errors.name?.message}
-                          />
-                        )}
-                      />
-                    </Grid>
-                    <Grid xs={12} sm={6} item>
-                      <Controller
-                        name="lastname"
-                        control={control}
-                        defaultValue=""
-                        render={({ field: { ref, ...rest } }) => (
-                          <RegisterTextField
-                            {...rest}
-                            label="Apellidos"
-                            type="text"
-                            inputRef={ref}
-                            error={!!errors.lastname}
-                            helperText={errors.lastname?.message}
-                          />
-                        )}
-                      />
-                    </Grid>
-                    <Grid xs={12} sm={6} item>
-                      <Controller
-                        name="ci"
-                        control={control}
-                        defaultValue=""
-                        render={({ field: { ref, ...rest } }) => (
-                          <RegisterTextField
-                            {...rest}
-                            label="Cédula"
-                            type="text"
-                            inputRef={ref}
-                            error={!!errors.ci}
-                            helperText={errors.ci?.message}
-                          />
-                        )}
-                      />
-                    </Grid>
-                    <Grid xs={12} sm={6} item>
-                      <Controller
-                        name="email"
-                        control={control}
-                        defaultValue=""
-                        render={({ field: { ref, ...rest } }) => (
-                          <RegisterTextField
-                            {...rest}
-                            label="Correo electrónico"
-                            type="email"
-                            autoComplete="email"
-                            inputRef={ref}
-                            error={!!errors.email}
-                            helperText={errors.email?.message}
-                          />
-                        )}
-                      />
-                    </Grid>
-                    <Grid item>
-                      <Button
-                        name="submit"
-                        variant="contained"
-                        type="submit"
-                        size="large"
-                        color="secondary"
-                        fullWidth={true}>
-                        Generar Credenciales
-                      </Button>
-                    </Grid>
-                  </Grid>
-                </form>
-              </FormContainer>
-              <Divider style={{ margin: '20px 0' }} />
+  return (
+    <RegisterContainer container direction="row" justifyContent="center" alignItems="center">
+      <Header data={props.data} />
+      <Grid item xs={11} sm={10} md={8} lg={6}>
+        <PaperStyled elevation={24}>
+          <Typography variant="h2" align="center">
+            Registra un empleado
+          </Typography>
+          <FormContainer>
+            <form noValidate onSubmit={handleSubmit(onGenerateCreds)}>
               <Grid container spacing={2} justifyContent="center" alignItems="center">
-                <Grid item>
-                  <Stack direction="row" spacing={1}>
-                    <Chip label={`Usuario: ${username}`} />
-                    <Chip label={`Contraseña: ${password}`} />
-                  </Stack>
+                <Grid xs={12} sm={6} item>
+                  <Controller
+                    name="name"
+                    control={control}
+                    defaultValue=""
+                    render={({ field: { ref, ...rest } }) => (
+                      <RegisterTextField
+                        {...rest}
+                        label="Nombre(s)"
+                        type="text"
+                        inputRef={ref}
+                        error={!!errors.name}
+                        helperText={errors.name?.message}
+                      />
+                    )}
+                  />
+                </Grid>
+                <Grid xs={12} sm={6} item>
+                  <Controller
+                    name="lastname"
+                    control={control}
+                    defaultValue=""
+                    render={({ field: { ref, ...rest } }) => (
+                      <RegisterTextField
+                        {...rest}
+                        label="Apellido(s)"
+                        type="text"
+                        inputRef={ref}
+                        error={!!errors.lastname}
+                        helperText={errors.lastname?.message}
+                      />
+                    )}
+                  />
+                </Grid>
+                <Grid xs={12} sm={6} item>
+                  <Controller
+                    name="ci"
+                    control={control}
+                    defaultValue=""
+                    render={({ field: { ref, ...rest } }) => (
+                      <RegisterTextField
+                        {...rest}
+                        label="Cédula"
+                        type="text"
+                        inputRef={ref}
+                        error={!!errors.ci}
+                        helperText={errors.ci?.message}
+                      />
+                    )}
+                  />
+                </Grid>
+                <Grid xs={12} sm={6} item>
+                  <Controller
+                    name="email"
+                    control={control}
+                    defaultValue=""
+                    render={({ field: { ref, ...rest } }) => (
+                      <RegisterTextField
+                        {...rest}
+                        label="Correo electrónico"
+                        type="email"
+                        autoComplete="email"
+                        inputRef={ref}
+                        error={!!errors.email}
+                        helperText={errors.email?.message}
+                      />
+                    )}
+                  />
                 </Grid>
                 <Grid item>
                   <Button
-                    disabled={controlButton}
+                    name="submit"
                     variant="contained"
+                    type="submit"
                     size="large"
-                    fullWidth={true}
-                    onClick={() => handleRegister(username, password)}>
-                    Registrar empleado
+                    color="secondary"
+                    fullWidth={true}>
+                    Dar de alta
                   </Button>
                 </Grid>
               </Grid>
-            </PaperStyled>
+            </form>
+          </FormContainer>
+          <Divider style={{ margin: '20px 0' }} />
+          <Grid container spacing={2} justifyContent="center" alignItems="center">
+            <Grid item>
+              <StackStyled direction="row" spacing={1}>
+                <Chip label={`Usuario: ${username}`} />
+                <Chip label={`Contraseña: ${password}`} />
+              </StackStyled>
+            </Grid>
+            <Grid item>
+              <Button variant="contained" size="large" fullWidth={true} onClick={handleRegister}>
+                Registrar empleado
+              </Button>
+            </Grid>
           </Grid>
-        </RegisterContainer>
-      );
-    }
-  } else {
-    navigate('/');
-  }
+        </PaperStyled>
+      </Grid>
+    </RegisterContainer>
+  );
 }
 
 export default RegisterPage;
@@ -260,16 +279,11 @@ const FormContainer = styled.div`
 
 const RegisterTextField = styled(TextField)`
   width: 100%;
-  input ~ svg {
-    font-size: 22px;
-  }
-  input ~ svg.MuiSelect-icon {
-    display: none;
-  }
-  input[value=''] ~ svg {
-    opacity: 0.11;
-  }
-  .MuiSelect-iconOutlined {
-    margin-right: 10px;
+`;
+
+const StackStyled = styled(Stack)`
+  span {
+    font-size: 17px;
+    font-weight: bold;
   }
 `;
